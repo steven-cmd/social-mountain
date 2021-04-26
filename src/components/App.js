@@ -1,37 +1,66 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 
-import './App.css';
+import "./App.css";
 
-import Header from './Header/Header';
-import Compose from './Compose/Compose';
+import Header from "./Header/Header";
+import Compose from "./Compose/Compose";
+import Post from "./Post/Post";
+import axios from "axios";
 
 class App extends Component {
   constructor() {
     super();
 
     this.state = {
-      posts: []
+      posts: [],
     };
 
-    this.updatePost = this.updatePost.bind( this );
-    this.deletePost = this.deletePost.bind( this );
-    this.createPost = this.createPost.bind( this );
+    this.updatePost = this.updatePost.bind(this);
+    this.deletePost = this.deletePost.bind(this);
+    this.createPost = this.createPost.bind(this);
+    this.searchFn = this.searchFn.bind(this);
   }
-  
+
   componentDidMount() {
-
+    axios
+      .get("https://practiceapi.devmountain.com/api/posts")
+      .then((res) => this.setState({ posts: res.data }))
+      .catch((err) => console.log(err));
   }
 
-  updatePost() {
-  
+  updatePost(id, text) {
+    axios
+      .put(`https://practiceapi.devmountain.com/api/posts?id=${id}`, {
+        text,
+      })
+      .then((res) => this.setState({ posts: res.data }));
   }
 
-  deletePost() {
-
+  deletePost(id) {
+    axios
+      .delete(`https://practiceapi.devmountain.com/api/posts?id=${id}`)
+      .then((res) => this.setState({ posts: res.data }));
   }
 
-  createPost() {
+  createPost(text) {
+    axios
+      .post("https://practiceapi.devmountain.com/api/posts", { text })
+      .then((res) => this.setState({ posts: res.data }));
+  }
 
+  searchFn(searchTerm) {
+    axios
+      .get(
+        `https://practiceapi.devmountain.com/api/posts/filter?text=${encodeURI(
+          searchTerm
+        )}`
+      )
+      .then((res) => this.setState({ posts: res.data }))
+      .catch((err) => console.log(err));
+
+    if (searchTerm === "") {
+      this.componentDidMount();
+    }
   }
 
   render() {
@@ -39,12 +68,20 @@ class App extends Component {
 
     return (
       <div className="App__parent">
-        <Header />
+        <Header searchFn={this.searchFn} />
 
         <section className="App__content">
-
-          <Compose />
-          
+          <Compose createPostFn={this.createPost} />
+          {this.state.posts.map((post) => (
+            <Post
+              key={post.id}
+              text={post.text}
+              date={post.date}
+              id={post.id}
+              updatePostFn={this.updatePost}
+              deletePostFn={this.deletePost}
+            ></Post>
+          ))}
         </section>
       </div>
     );
